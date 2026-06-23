@@ -52,6 +52,15 @@ async def review_resume(resume_text: str) -> ReviewResponse:
             response.raise_for_status()
             data = response.json()
         raw = data["candidates"][0]["content"]["parts"][0]["text"]
+    except httpx.HTTPStatusError as exc:
+        err_body = exc.response.text
+        raise HTTPException(
+            status.HTTP_502_BAD_GATEWAY,
+            f"Lỗi từ Gemini (HTTP {exc.response.status_code}): {err_body}"
+        ) from exc
     except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as exc:
-        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "Không thể nhận kết quả từ Gemini. Vui lòng thử lại.") from exc
+        raise HTTPException(
+            status.HTTP_502_BAD_GATEWAY,
+            f"Không thể nhận kết quả từ Gemini. Lỗi: {str(exc)}"
+        ) from exc
     return _parse_response(raw)
