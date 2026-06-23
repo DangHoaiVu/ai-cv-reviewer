@@ -46,9 +46,17 @@ async def review_resume(resume_text: str) -> ReviewResponse:
         "contents": [{"role": "user", "parts": [{"text": f"RESUME CONTENT:\n{resume_text}"}]}],
         "generationConfig": {"temperature": 0.2, "responseMimeType": "application/json"},
     }
+    
+    headers = {}
+    params = {}
+    if settings.gemini_api_key.startswith("AIzaSy"):
+        params["key"] = settings.gemini_api_key
+    else:
+        headers["Authorization"] = f"Bearer {settings.gemini_api_key}"
+
     try:
         async with httpx.AsyncClient(timeout=45) as client:
-            response = await client.post(url, params={"key": settings.gemini_api_key}, json=payload)
+            response = await client.post(url, params=params, headers=headers, json=payload)
             response.raise_for_status()
             data = response.json()
         raw = data["candidates"][0]["content"]["parts"][0]["text"]
