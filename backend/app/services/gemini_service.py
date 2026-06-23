@@ -1,5 +1,6 @@
 import json
 import re
+import unicodedata
 import httpx
 from fastapi import HTTPException, status
 from pydantic import ValidationError
@@ -21,7 +22,7 @@ Do not include markdown or claims not supported by the resume. Write feedback in
 
 
 def _parse_response(raw: str) -> ReviewResponse:
-    candidate = raw.strip()
+    candidate = unicodedata.normalize('NFC', raw.strip())
     fenced = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", candidate, re.DOTALL)
     if fenced:
         candidate = fenced.group(1)

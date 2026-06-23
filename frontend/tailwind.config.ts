@@ -12,7 +12,7 @@ const config: Config = {
         coral: "#e66c50"
       },
       boxShadow: { soft: "0 22px 70px rgba(16, 35, 30, 0.10)" },
-      fontFamily: { sans: ["var(--font-manrope)", "sans-serif"], serif: ["var(--font-newsreader)", "serif"] }
+      fontFamily: { sans: ["var(--font-manrope)", "sans-serif"], serif: ["var(--font-lora)", "serif"] }
     },
   },
   plugins: [],
