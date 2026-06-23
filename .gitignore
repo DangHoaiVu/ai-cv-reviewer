@@ -1,0 +1,25 @@
+# Environment and local data
+.env
+.env.local
+.codexgit/
+.agents/
+.codex/
+.tools/
+*.log
+.uploads/
+backend/.uploads/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Next.js
+node_modules/
+.next/
+out/
+
+# Editor and OS
+.DS_Store
+Thumbs.db
+.vscode/

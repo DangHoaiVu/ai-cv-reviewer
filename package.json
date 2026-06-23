@@ -1,0 +1,11 @@
+{
+  "name": "ai-cv-reviewer",
+  "private": true,
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "install": "npm --prefix frontend install",
+    "build": "npm --prefix frontend run build"
+  }
+}
