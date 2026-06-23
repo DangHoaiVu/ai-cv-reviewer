@@ -19,7 +19,7 @@ export default function Home() {
           <h1 className="mt-6 max-w-2xl font-serif text-5xl font-semibold leading-[1.1] tracking-tight sm:text-7xl">CV tốt hơn bắt đầu từ một góc nhìn <span className="italic text-green">rõ hơn.</span></h1>
           <p className="mt-6 max-w-xl text-base leading-7 text-ink/65 sm:text-lg">Tải CV lên để nhận điểm ATS, phân tích chuyên sâu và những gợi ý cải thiện có thể áp dụng ngay.</p>
           <div className="mt-9 flex flex-wrap gap-x-7 gap-y-3 text-sm font-semibold text-ink/60">
-            <span>✓ Phân tích bằng Gemini</span><span>✓ Không cần đăng ký</span><span>✓ Phản hồi tiếng Việt</span>
+            <span>✓ Phân tích bằng AI</span><span>✓ Không cần đăng ký</span><span>✓ Phản hồi tiếng Việt</span>
           </div>
         </div>
         <UploadCard />

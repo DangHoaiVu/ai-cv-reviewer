@@ -8,7 +8,7 @@ export function Header() {
         <span className="grid size-9 place-items-center rounded-xl bg-ink text-white"><FileCheck2 size={19} /></span>
         CV Insight
       </Link>
-      <span className="rounded-full border border-ink/10 bg-white/70 px-3 py-1.5 text-xs font-semibold text-ink/60">Powered by Gemini</span>
+      <span className="rounded-full border border-ink/10 bg-white/70 px-3 py-1.5 text-xs font-semibold text-ink/60">Bởi Hoài Vũ</span>
     </header>
   );
 }
