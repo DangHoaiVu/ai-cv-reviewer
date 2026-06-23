@@ -46,7 +46,8 @@ async def review_resume(resume_text: str) -> ReviewResponse:
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": f"RESUME CONTENT:\n{resume_text}"}
         ],
-        "response_format": {"type": "json_object"}
+        "response_format": {"type": "json_object"},
+        "max_tokens": 4000
     }
     
     headers = {
