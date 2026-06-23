@@ -49,7 +49,7 @@ async def review_resume(resume_text: str) -> ReviewResponse:
     
     headers = {}
     params = {}
-    if settings.gemini_api_key.startswith("AIzaSy"):
+    if settings.gemini_api_key.startswith(("AIzaSy", "AQ.")):
         params["key"] = settings.gemini_api_key
     else:
         headers["Authorization"] = f"Bearer {settings.gemini_api_key}"
@@ -62,6 +62,12 @@ async def review_resume(resume_text: str) -> ReviewResponse:
         raw = data["candidates"][0]["content"]["parts"][0]["text"]
     except httpx.HTTPStatusError as exc:
         err_body = exc.response.text
+        if exc.response.status_code in (401, 403):
+            raise HTTPException(
+                status.HTTP_502_BAD_GATEWAY,
+                f"Lỗi xác thực Gemini API (HTTP {exc.response.status_code}). "
+                f"Vui lòng kiểm tra hoặc cập nhật lại GEMINI_API_KEY trong file backend/.env. Chi tiết: {err_body}"
+            ) from exc
         raise HTTPException(
             status.HTTP_502_BAD_GATEWAY,
             f"Lỗi từ Gemini (HTTP {exc.response.status_code}): {err_body}"
