@@ -37,7 +37,6 @@ def _parse_response(raw: str) -> ReviewResponse:
 
 
 async def review_resume(resume_text: str) -> ReviewResponse:
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent"
     payload = {
         "system_instruction": {"parts": [{"text": SYSTEM_PROMPT}]},
         "contents": [{"role": "user", "parts": [{"text": f"RESUME CONTENT:\n{resume_text}"}]}],
@@ -53,12 +52,14 @@ async def review_resume(resume_text: str) -> ReviewResponse:
     root_sa_path = Path(__file__).resolve().parent.parent.parent.parent / "service-account.json"
     
     creds = None
+    project_id = None
     if env_sa_json:
         try:
             info = json.loads(env_sa_json)
+            project_id = info.get("project_id")
             creds = service_account.Credentials.from_service_account_info(
                 info,
-                scopes=["https://www.googleapis.com/auth/generative-language"]
+                scopes=["https://www.googleapis.com/auth/cloud-platform"]
             )
         except Exception as exc:
             raise HTTPException(
@@ -67,9 +68,12 @@ async def review_resume(resume_text: str) -> ReviewResponse:
             )
     elif backend_sa_path.is_file():
         try:
+            with open(backend_sa_path, "r") as f:
+                info = json.load(f)
+                project_id = info.get("project_id")
             creds = service_account.Credentials.from_service_account_file(
                 str(backend_sa_path),
-                scopes=["https://www.googleapis.com/auth/generative-language"]
+                scopes=["https://www.googleapis.com/auth/cloud-platform"]
             )
         except Exception as exc:
             raise HTTPException(
@@ -78,9 +82,12 @@ async def review_resume(resume_text: str) -> ReviewResponse:
             )
     elif root_sa_path.is_file():
         try:
+            with open(root_sa_path, "r") as f:
+                info = json.load(f)
+                project_id = info.get("project_id")
             creds = service_account.Credentials.from_service_account_file(
                 str(root_sa_path),
-                scopes=["https://www.googleapis.com/auth/generative-language"]
+                scopes=["https://www.googleapis.com/auth/cloud-platform"]
             )
         except Exception as exc:
             raise HTTPException(
@@ -88,7 +95,9 @@ async def review_resume(resume_text: str) -> ReviewResponse:
                 f"Lỗi nạp Service Account từ file root/service-account.json: {str(exc)}"
             )
 
-    if creds:
+    if creds and project_id:
+        # Route to Vertex AI endpoint when using Service Account
+        url = f"https://us-central1-aiplatform.googleapis.com/v1/projects/{project_id}/locations/us-central1/publishers/google/models/{settings.gemini_model}:generateContent"
         try:
             auth_req = google.auth.transport.requests.Request()
             creds.refresh(auth_req)
@@ -99,6 +108,7 @@ async def review_resume(resume_text: str) -> ReviewResponse:
                 f"Lỗi khi xác thực bằng Service Account: {str(exc)}"
             )
     else:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent"
         if not settings.gemini_api_key:
             raise HTTPException(
                 status.HTTP_503_SERVICE_UNAVAILABLE,
