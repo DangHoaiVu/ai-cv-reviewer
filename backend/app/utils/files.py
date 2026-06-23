@@ -28,7 +28,12 @@ async def save_pdf(upload: UploadFile) -> str:
     if len(data) > settings.max_upload_bytes:
         raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "Tệp PDF không được vượt quá 10 MB.")
     if not data or not _looks_like_pdf(data):
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Tệp không phải là PDF hợp lệ.")
+        prefix_debug = data[:100].hex()
+        preview_text = data[:100].decode('utf-8', errors='ignore')
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"Tệp không phải là PDF hợp lệ. Prefix (Hex): {prefix_debug} | Text: {preview_text}"
+        )
 
     settings.upload_dir.mkdir(parents=True, exist_ok=True)
     file_id = uuid4().hex
