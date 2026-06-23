@@ -1,3 +1,4 @@
+import base64
 from pathlib import Path
 from uuid import uuid4
 
@@ -7,7 +8,7 @@ from app.config import settings
 
 
 def _looks_like_pdf(data: bytes) -> bool:
-    return data.startswith(b"%PDF-")
+    return data.startswith(b"%PDF-") or data.startswith(b"JVBERi0")
 
 
 async def save_pdf(upload: UploadFile) -> str:
@@ -18,6 +19,12 @@ async def save_pdf(upload: UploadFile) -> str:
         raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Định dạng tệp không hợp lệ.")
 
     data = await upload.read(settings.max_upload_bytes + 1)
+    if data.startswith(b"JVBERi0"):
+        try:
+            data = base64.b64decode(data)
+        except Exception:
+            pass
+
     if len(data) > settings.max_upload_bytes:
         raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "Tệp PDF không được vượt quá 10 MB.")
     if not data or not _looks_like_pdf(data):
