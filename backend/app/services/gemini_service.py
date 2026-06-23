@@ -1,12 +1,15 @@
 import json
 import re
-
 import httpx
 from fastapi import HTTPException, status
 from pydantic import ValidationError
-
 from app.config import settings
 from app.schemas import ReviewResponse
+
+import os
+from pathlib import Path
+from google.oauth2 import service_account
+import google.auth.transport.requests
 
 SYSTEM_PROMPT = """You are a professional technical recruiter and ATS specialist.
 Analyze the resume fairly based only on its content. Return concise, actionable feedback.
@@ -34,12 +37,6 @@ def _parse_response(raw: str) -> ReviewResponse:
 
 
 async def review_resume(resume_text: str) -> ReviewResponse:
-    if not settings.gemini_api_key:
-        raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE,
-            "Backend chưa được cấu hình GEMINI_API_KEY.",
-        )
-
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent"
     payload = {
         "system_instruction": {"parts": [{"text": SYSTEM_PROMPT}]},
@@ -49,10 +46,41 @@ async def review_resume(resume_text: str) -> ReviewResponse:
     
     headers = {}
     params = {}
-    if settings.gemini_api_key.startswith(("AIzaSy", "AQ.")):
-        params["key"] = settings.gemini_api_key
+
+    # Check for service-account.json in backend/ or project root/
+    backend_sa_path = Path(__file__).resolve().parent.parent.parent / "service-account.json"
+    root_sa_path = Path(__file__).resolve().parent.parent.parent.parent / "service-account.json"
+    
+    selected_sa_path = None
+    if backend_sa_path.is_file():
+        selected_sa_path = backend_sa_path
+    elif root_sa_path.is_file():
+        selected_sa_path = root_sa_path
+
+    if selected_sa_path:
+        try:
+            creds = service_account.Credentials.from_service_account_file(
+                str(selected_sa_path),
+                scopes=["https://www.googleapis.com/auth/generative-language"]
+            )
+            auth_req = google.auth.transport.requests.Request()
+            creds.refresh(auth_req)
+            headers["Authorization"] = f"Bearer {creds.token}"
+        except Exception as exc:
+            raise HTTPException(
+                status.HTTP_502_BAD_GATEWAY,
+                f"Lỗi khi xác thực bằng Service Account: {str(exc)}"
+            )
     else:
-        headers["Authorization"] = f"Bearer {settings.gemini_api_key}"
+        if not settings.gemini_api_key:
+            raise HTTPException(
+                status.HTTP_503_SERVICE_UNAVAILABLE,
+                "Backend chưa được cấu hình GEMINI_API_KEY hoặc file service-account.json.",
+            )
+        if settings.gemini_api_key.startswith(("AIzaSy", "AQ.")):
+            params["key"] = settings.gemini_api_key
+        else:
+            headers["Authorization"] = f"Bearer {settings.gemini_api_key}"
 
     try:
         async with httpx.AsyncClient(timeout=45) as client:
