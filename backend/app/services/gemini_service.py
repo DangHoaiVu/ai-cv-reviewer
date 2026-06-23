@@ -47,22 +47,49 @@ async def review_resume(resume_text: str) -> ReviewResponse:
     headers = {}
     params = {}
 
-    # Check for service-account.json in backend/ or project root/
+    # Check for service-account.json in env variable, backend/ or project root/
+    env_sa_json = os.getenv("GEMINI_SERVICE_ACCOUNT_JSON")
     backend_sa_path = Path(__file__).resolve().parent.parent.parent / "service-account.json"
     root_sa_path = Path(__file__).resolve().parent.parent.parent.parent / "service-account.json"
     
-    selected_sa_path = None
-    if backend_sa_path.is_file():
-        selected_sa_path = backend_sa_path
-    elif root_sa_path.is_file():
-        selected_sa_path = root_sa_path
-
-    if selected_sa_path:
+    creds = None
+    if env_sa_json:
         try:
-            creds = service_account.Credentials.from_service_account_file(
-                str(selected_sa_path),
+            info = json.loads(env_sa_json)
+            creds = service_account.Credentials.from_service_account_info(
+                info,
                 scopes=["https://www.googleapis.com/auth/generative-language"]
             )
+        except Exception as exc:
+            raise HTTPException(
+                status.HTTP_502_BAD_GATEWAY,
+                f"Lỗi nạp Service Account từ biến môi trường GEMINI_SERVICE_ACCOUNT_JSON: {str(exc)}"
+            )
+    elif backend_sa_path.is_file():
+        try:
+            creds = service_account.Credentials.from_service_account_file(
+                str(backend_sa_path),
+                scopes=["https://www.googleapis.com/auth/generative-language"]
+            )
+        except Exception as exc:
+            raise HTTPException(
+                status.HTTP_502_BAD_GATEWAY,
+                f"Lỗi nạp Service Account từ file backend/service-account.json: {str(exc)}"
+            )
+    elif root_sa_path.is_file():
+        try:
+            creds = service_account.Credentials.from_service_account_file(
+                str(root_sa_path),
+                scopes=["https://www.googleapis.com/auth/generative-language"]
+            )
+        except Exception as exc:
+            raise HTTPException(
+                status.HTTP_502_BAD_GATEWAY,
+                f"Lỗi nạp Service Account từ file root/service-account.json: {str(exc)}"
+            )
+
+    if creds:
+        try:
             auth_req = google.auth.transport.requests.Request()
             creds.refresh(auth_req)
             headers["Authorization"] = f"Bearer {creds.token}"
