@@ -2,6 +2,8 @@
 
 A web app that analyzes PDF resumes with Gemini 2.5 Flash, scores ATS readiness, and returns concise Vietnamese feedback.
 
+![CV Insight Screenshot](assets/screenshot.png)
+
 ## Cong nghe
 
 - Frontend: Next.js 15, TypeScript, Tailwind CSS, Radix UI
